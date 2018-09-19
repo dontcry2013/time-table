@@ -32,318 +32,469 @@
       text-align: center;
       padding: 8px;
     }
-    
-/*    .dropped::after{
-      content: 'x';
-    }
-*//*    tr:nth-child(even) {
-        background-color: #dddddd;
-    }*/
     </style>
+  </head>
+  <body>
+    <div id="app">
+      <div id="cohortSection" class="mySection" style="display: inline-block;" v-if='tableData.cohort'>
+        <div v-for='cohort in tableData.cohort'>
+          <div class="draggableMajor mydrag" v-bind:style="{'background-color': cohort.color}">
+          </div> 
+          <div style="display: inline-block;">{{ cohort.name }}</div>
+        </div>
+      </div>
+
+      <div id="teacherSection" class="mySection" style="display: inline-block;" v-if='tableData.teacher'>
+        <div style="margin: 5px" v-for='name in tableData.teacher.name'>
+          <div class="draggableTeacher mydrag" style="text-align: center; width: 50px; border: 1px solid;" :style="{'border-color':tableData.teacher.color}">
+            {{ name }}
+          </div>
+        </div>
+      </div>    
+
+      <div id="roomSection" class="mySection" style="display: inline-block;" v-if='tableData.room'>
+        <div style="margin: 5px" v-for='name in tableData.room.name'>
+          <div class="draggableRoom mydrag" style="text-align: center; width: 50px; border: 1px solid;" :style="{'border-color':tableData.room.color}">
+            {{ name }}
+          </div>
+        </div>
+      </div>  
+      
+
+      <div id="tableSection" style="position: relative;">
+        <div id="iButtons" style="position: absolute; width: 20px;">
+          <input style="width: 100%" type="button" value="+" @click="test">
+          <input style="width: 100%" type="button" value="-">
+        </div>
+        
+        <table id="iTable">
+          <tbody id="iTBody">
+            <tr>
+              <td colspan="120" style="text-align: center;">
+                总班级课表
+              </td>
+            </tr>
+            
+            <tr>
+              <td colspan="120" style="text-align: center;">
+                2017-2018学年第2学期
+              </td>
+            </tr>
+            
+            <tr id="iTWeekNum">
+              <td colspan="6">
+                周次
+              </td>
+              <td v-for="i in tableData.totalweeks">
+                {{ i }}
+              </td>
+            </tr>
+            
+            <tr id="iTHead">
+              <th>星期</th>
+              <th>节次</th>
+              <th>时间</th>
+              <th>专业/班级</th>
+              <th>授课老师</th>
+              <th>上课教室</th>
+              <th v-for="i in dateArr">
+                {{ i }}
+              </th>
+            </tr>
+            
+            <template v-if="tableData.rows" v-for="(sessions, weekday) in tableData.rows">
+              <template v-for="(session, si) in sessions">
+                <tr v-for="(tick, ti) in session.ticks">
+                  <td>
+                   {{ weekday }} 
+                  </td>
+                  <td>
+                    {{ session.sessionnum }}
+                  </td>
+                  <td>
+                    {{ session.sessiontime }}
+                  </td>
+                  <td>
+                    {{ tick.cohort }}
+                  </td>
+                  <td>
+                    {{ tick.teacher }}
+                  </td>
+                  <td>
+                    {{ tick.room }}
+                  </td>
+                  <td v-for="i in tableData.totalweeks" :data-day="weekday" :data-si="si" :data-ti="ti" :data-x="i" @mousedown="mousedown($event)">
+                    <template v-if="tick[i]">&radic;</template>
+                  </td>
+                </tr>
+              </template>
+            </template>
+          </tbody>  
+        </table>  
+      </div>
+    </div>
+    
     <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <script src="https://unpkg.com/vue/dist/vue.js"></script>
     <script>
-    $(function(){
-      let date = '03/5/2018';
-      let getNextWeek = (function(){
-        let myday;
-        return function(arg){
-          myday = myday || (arg?new Date(arg):new Date());
-          myday = new Date(myday.getFullYear(), myday.getMonth(), myday.getDate()+7);
-          return myday;
-        }
-      }());
-      let weekArr = [];
-      for(let i = 1; i <= 20; i++){
-        let mDate = getNextWeek(date);
-        weekArr.push(mDate.getMonth()+'/'+mDate.getDate());
-        $("#iTWeekNum").append("<td>"+i+"</td>");
-        let mMonth = mDate.getMonth() + 1;
-        $("#iTHead").append("<th>"+mMonth+'/'+mDate.getDate()+"</th>");
-      }
-
-      let startHour = 8;
-      let startMinute = 30
-      let twoSessionTime = 95;
-      let getNextTimeframe = (function(){
-        let myhour, myminute;
-        return function(hour, minute){
-          myhour = myhour != undefined ? myhour : (hour?hour:(new Date().getHours()));
-          myminute = myminute != undefined ? myminute : (minute?minute:(new Date().getMinutes()));
-          myminute += twoSessionTime;
-          if(myminute >= 60){
-            let a = Math.round(myminute/60);
-            myminute %= 60;
-            myhour+=a;
-          }
-          if(myhour >= 24){
-            myhour %= 24;
-          }
-          return (myhour<10?('0'+myhour):myhour)+':'+(myminute<10?('0'+myminute):myminute);
-        }
-      }());
-
-      let weekdayArr = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-      let timeArr = [(startHour<10?('0'+startHour):startHour)+':'+(startMinute<10?('0'+startMinute):startMinute)];
-      for (var j = 0; j < weekdayArr.length; j++) {
-        for(let i = 1; i <= 5; i++){
-          let mDate = getNextTimeframe(startHour, startMinute);
-          timeArr.push(mDate);
-          var newTr = $('<tr />').appendTo("#iTBody");
-          $('<td class="myhover">'+weekdayArr[j]+'</td>').appendTo(newTr);
-          $('<td>'+(i*2-1)+'-'+(i*2)+'</td>').appendTo(newTr);
-          $('<td>'+timeArr[i-1] + '-' +mDate+'</td>').appendTo(newTr);
-          $('<td class="droppableMajor"/>').appendTo(newTr);
-          $('<td class="droppableTeacher"/>').appendTo(newTr);
-          $('<td class="droppableRoom"/>').appendTo(newTr);
-
-          for (let i = 20; i >= 1; i--) {
-            $('<td class="mycell"/>').appendTo(newTr);
-          }
-        }
-      }
-
-      $(".mydrag").each(function(index, el) {
-        var text = $(el).next().text();
-        console.log(text)
-        $(el).attr("data-bind", text);
-      });
-      
-      $( ".draggableMajor" ).draggable({revert: true});
-      $( ".droppableMajor" ).droppable({
-        accept: ".draggableMajor",
-        drop: function( event, ui ) {
-          console.log(ui.helper.css("background-color"));
-          $(this).html( ui.helper.attr("data-bind") );
-          $(this).css("background-color", ui.helper.css("background-color"));
-          $(this).addClass('dropped');
-          $(this).off("dblclick");
-          $(this).dblclick(function() {
-            $(this).text('');
-            $(this).removeAttr("style");
-            $(this).removeClass('dropped');
-            $(this).off("dblclick");
-          });
-          $(this).siblings('.dropped').css("background-color", ui.helper.css("background-color"));
-        }
-      });
-
-      $( ".draggableTeacher" ).draggable({revert: true});
-      $( ".droppableTeacher" ).droppable({
-        accept: ".draggableTeacher",
-        drop: function( event, ui ) {
-          $(this).html( ui.helper.text() );
-          var mm = $(this).siblings('.droppableMajor');
-          var color = mm.css("background-color");
-          console.log(color);
-          $(this).css("background-color", color);
-          $(this).addClass('dropped');
-          $(this).off("dblclick");
-          $(this).dblclick(function() {
-            $(this).text('');
-            $(this).removeAttr("style");
-            $(this).removeClass('dropped');
-            $(this).off("dblclick");
-          });
-        }
-      });
-
-      $( ".draggableRoom" ).draggable({revert: true});
-      $( ".droppableRoom" ).droppable({
-        accept: ".draggableRoom",
-        drop: function( event, ui ) {
-          $(this).html( ui.helper.text() );
-          var mm = $(this).siblings('.droppableMajor');
-          var color = mm.css("background-color");
-          console.log(color);
-          $(this).css("background-color", color);
-          $(this).addClass('dropped');
-          $(this).off("dblclick");
-          $(this).dblclick(function() {
-            $(this).text('');
-            $(this).removeAttr("style");
-            $(this).removeClass('dropped');
-            $(this).off("dblclick");
-          });
-        }
-      });
-
-      $(".mycell").click(function(event) {
-        var content = $(this).html();
-        if(content){
-          $(this).html('')
-          $(this).removeClass('dropped');
-          $(this).removeAttr("style");
-        } else{
-          $(this).html('&radic;');
-          $(this).addClass('dropped');
-          var color = $(this).siblings('.droppableMajor').css("background-color");
-          $(this).css("background-color", color);
-        }
-      });
-
-
-
-      $(".myhover").hover(function() {
-        // $(this).prepend('<input type="button" onclick="addRow(this)" value="+">');
-        // $(this).prepend('<input type="button" onclick="removeRow(this)" value="-">');
-        var mPos = $(this).position();
-        console.log(mPos);
-        $('#iButtons').css('top', mPos.top+2);
-        $('#iButtons').show('slow/400/fast', function() {
-          
-        });;
-      }, function() {
-        // $(this).find("input").remove()
-        // $('#iButtons').hide();
-      });
-
-
-      new Vue({
-        el: '#iTable',
+      var vm = new Vue({
+        el: '#app',
         data: {
-          tableData: null,
-        }
-      })
+          tableData: {
+            title: '总班级课表',
+            year: '2017-2018',
+            semester: '2',
+            totalweeks: 20,
+            startdate: '03/5/2018',
+            cohort:[
+              {color: "cadetblue", name: 'Construction Management 1701'}, 
+              {color: "darkturquoise", name: 'Construction Management 1702'}, 
+              {color: "beige", name: 'Civil Engineering 1701'}, 
+              {color: "darkorange", name: 'Civil Engineering 1702'},
+            ],
+            teacher:{
+              color: "orange", name: ['Alice', 'Jack', 'Pony', 'John']
+            },
+            room:{
+              color: "khaki",
+              name: ['10-108', '10-102', '10-107', '10-103']
+            },
+            rows:{
+              Mon: [
+                {
+                  sessionnum: '1-2', sessiontime:'08:30-10:05',  
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined, 8: true},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '3-4', sessiontime:'10:25-12:00', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '5-6', sessiontime:'14:00-15:35', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '7-8', sessiontime:'15:45-17:20', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '9-10', sessiontime:'19:30-21:05', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined, 2:true},
+                  ]
+                },
+              ],
+              Tue: [
+                {
+                  sessionnum: '1-2', sessiontime:'08:30-10:05',  
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '3-4', sessiontime:'10:25-12:00', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '5-6', sessiontime:'14:00-15:35', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '7-8', sessiontime:'15:45-17:20', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '9-10', sessiontime:'19:30-21:05', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+              ],
+              Wed: [
+                {
+                  sessionnum: '1-2', sessiontime:'08:30-10:05',  
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '3-4', sessiontime:'10:25-12:00', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '5-6', sessiontime:'14:00-15:35', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '7-8', sessiontime:'15:45-17:20', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '9-10', sessiontime:'19:30-21:05', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+              ],
+              Thu: [
+                {
+                  sessionnum: '1-2', sessiontime:'08:30-10:05',  
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '3-4', sessiontime:'10:25-12:00', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '5-6', sessiontime:'14:00-15:35', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '7-8', sessiontime:'15:45-17:20', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '9-10', sessiontime:'19:30-21:05', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+              ],
+              Fri: [
+                {
+                  sessionnum: '1-2', sessiontime:'08:30-10:05',  
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '3-4', sessiontime:'10:25-12:00', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '5-6', sessiontime:'14:00-15:35', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '7-8', sessiontime:'15:45-17:20', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '9-10', sessiontime:'19:30-21:05', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+              ],
+              Sat: [
+                {
+                  sessionnum: '1-2', sessiontime:'08:30-10:05',  
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '3-4', sessiontime:'10:25-12:00', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '5-6', sessiontime:'14:00-15:35', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '7-8', sessiontime:'15:45-17:20', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '9-10', sessiontime:'19:30-21:05', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+              ],              
+              Sun: [
+                {
+                  sessionnum: '1-2', sessiontime:'08:30-10:05',  
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '3-4', sessiontime:'10:25-12:00', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '5-6', sessiontime:'14:00-15:35', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '7-8', sessiontime:'15:45-17:20', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+                {
+                  sessionnum: '9-10', sessiontime:'19:30-21:05', 
+                  ticks:[
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                    {cohort:undefined, teacher:undefined, room:undefined,},
+                  ]
+                },
+              ],
+            },
+          },
 
-    });
+          anotherDate:[],
+        },
+        computed:{
+          dateArr: function(){
+            var weekArr = [];
+            for(let i = 1; i <= this.tableData.totalweeks; i++){
+              let mDate = this.getNextWeek(this.tableData.startdate);
+              weekArr.push((mDate.getMonth()+1)+'/'+mDate.getDate());
+            }
+            return weekArr;
+          }
+        },
+        methods:{
+          getNextWeek: (function(){
+            let myday;
+            return function(arg){
+              myday = myday || (arg?new Date(arg):new Date());
+              myday = new Date(myday.getFullYear(), myday.getMonth(), myday.getDate()+7);
+              return myday;
+            }
+          })(),
+          mousedown: function(e){
+            var content = e.target.innerHTML;
+            var si = e.target.getAttribute("data-si");
+            var ti = e.target.getAttribute("data-ti");
+            var x = e.target.getAttribute("data-x");
+            console.log(si, ti, x, content);
 
-    function addRow(self){
-      // console.log(self.parentElement.parentElement);
-      // console.log($(self.parentElement.parentElement));
-      // console.log(self.parentElement.parentElement.outerHTML);
-      // $(self.parentElement.parentElement).after();
-      var ret = $(self.parentElement.parentElement.outerHTML).insertAfter(self.parentElement.parentElement);
-      ret.find('input').remove();
-      var first = ret.children(":first");
-      console.log(first);
-      first.hover(function() {
-        $(this).prepend('<input type="button" onclick="addRow(this)" value="+">');
-        $(this).prepend('<input type="button" onclick="removeRow(this)" value="-">');
-      }, function() {
-        $(this).find("input").remove()
+            if(content == "\u221A"){
+              e.target.innerHTML = '';
+              // $(this).removeClass('dropped');
+              // $(this).removeAttr("style");
+            } else{
+              e.target.innerHTML = '&radic;';
+              // $(this).addClass('dropped');
+              // var color = $(this).siblings('.droppableMajor').css("background-color");
+              // $(this).css("background-color", color);
+            }
+          },
+
+          test: function(){
+            var test = {
+              sessionnum: 'testest', sessiontime:'19:30-21:05', 
+              ticks:[
+                {cohort:undefined, teacher:undefined, room:undefined,},
+                {cohort:undefined, teacher:undefined, room:undefined,},
+              ]
+            }
+            // vm.$data.tableData.rows['Mon'][0].ticks[0]['1'] = true;
+            this.tableData.rows['Sun'].push(test);
+            console.log(this.tableData.rows['Sun']);
+          },
+
+
+        },
+        created: function(){
+
+        },
       });
-      console.log(ret);
-    }
-    function removeRow(self){
-      var ret = $(self.parentElement.parentElement)
-      console.log(ret);
-      ret.remove()
-    }
-    </script>
-  </head>
-  <body>
-    <div style="display: inline-block;">
-      <div>
-        <div class="draggableMajor mydrag" style="background-color: cadetblue;">
-        </div> 
-        <div style="display: inline-block;">Construction Management 1701</div>
-      </div>
-      <div>
-        <div class="draggableMajor mydrag" style="background-color: darkturquoise;">
-        </div> 
-        <div style="display: inline-block;">Construction Management 1702</div>
-      </div>
-      <div>
-        <div class="draggableMajor mydrag" style="background-color: beige;">
-        </div> 
-        <div style="display: inline-block;">Civil Engineering 1701</div>
-      </div>
-      <div>
-        <div class="draggableMajor mydrag" style="background-color: darkorange;">
-        </div> 
-        <div style="display: inline-block;">Civil Engineering 1702</div>
-      </div>
-    </div>
-
-    <div style="display: inline-block;">
-      <div style="margin: 5px">
-        <div class="draggableTeacher mydrag" style="text-align: center; width: 50px; border: 1px solid orange;" >
-          Alice
-        </div>
-      </div>
-      <div style="margin: 5px">
-        <div class="draggableTeacher mydrag" style="text-align: center; width: 50px; border: 1px solid orange;" >
-          Jack
-        </div>  
-      </div>
-      <div style="margin: 5px">
-        <div class="draggableTeacher mydrag" style="text-align: center; width: 50px; border: 1px solid orange;" >
-          Pony
-        </div>  
-      </div>
-      <div style="margin: 5px">
-        <div class="draggableTeacher mydrag" style="text-align: center; width: 50px; border: 1px solid orange;" >
-          John
-        </div>  
-      </div>
-    </div>  
-
-    <div style="display: inline-block;">
-      <div style="margin: 5px">
-        <div class="draggableRoom mydrag" style="text-align: center; width: 50px; border: 1px solid khaki;" >
-          10-108
-        </div>
-      </div>
-      <div style="margin: 5px">
-        <div class="draggableRoom mydrag" style="text-align: center; width: 50px; border: 1px solid khaki;" >
-          10-102
-        </div>  
-      </div>
-      <div style="margin: 5px">
-        <div class="draggableRoom mydrag" style="text-align: center; width: 50px; border: 1px solid khaki;" >
-          10-107
-        </div>  
-      </div>
-      <div style="margin: 5px">
-        <div class="draggableRoom mydrag" style="text-align: center; width: 50px; border: 1px solid khaki;" >
-          10-103
-        </div>  
-      </div>
-    </div>
-    
-     
-
-    <div>
-      <input id='idate' type="date">
-    </div>
-
-    <div id="iTParent" style="position: relative;">
-      <div id="iButtons" style="position: absolute; width: 20px; display: none;">
-        <input style="width: 100%" type="button" value="+">
-        <input style="width: 100%" type="button" value="-">
-      </div>
       
-      <table id="iTable">
-        <tbody id="iTBody">
-          <tr>
-            <td colspan="120" style="text-align: center;">
-              总班级课表
-            </td>
-          </tr>
-          <tr>
-            <td colspan="120" style="text-align: center;">
-              2017-2018学年第2学期
-            </td>
-          </tr>
-          <tr id="iTWeekNum">
-            <td colspan="6">
-              周次
-            </td>
-          </tr>
-          
-          <tr id="iTHead">
-            <th>星期</th>
-            <th>节次</th>
-            <th>时间</th>
-            <th>专业/班级</th>
-            <th>授课老师</th>
-            <th>上课教室</th>
-          </tr>
-        </tbody>  
-      </table>  
-    </div>
+      // console.log(vm.$data);
+      // var test = {
+      //   sessionnum: 'testest', sessiontime:'19:30-21:05', 
+      //   ticks:[
+      //     {cohort:undefined, teacher:undefined, room:undefined,},
+      //     {cohort:undefined, teacher:undefined, room:undefined,},
+      //   ]
+      // }
+      // vm.$data.tableData.rows['Mon'][0].ticks[0]['1'] = true;
+      // vm.$data.tableData.rows['Sun'].push(test);
+      // console.log(vm.$data);
+    </script>
     
   </body>
 </html>
