@@ -63,8 +63,8 @@
 
       <div id="tableSection" style="position: relative;">
         <div id="iButtons" style="position: absolute; width: 20px;">
-          <input style="width: 100%" type="button" value="+" @click="test">
-          <input style="width: 100%" type="button" value="-">
+          <input style="width: 100%" type="button" value="+" @click="addRow">
+          <input style="width: 100%" type="button" value="-" @click="removeRow">
         </div>
         
         <table id="iTable">
@@ -105,7 +105,7 @@
             <template v-if="tableData.rows" v-for="(sessions, weekday) in tableData.rows">
               <template v-for="(session, si) in sessions">
                 <tr v-for="(tick, ti) in session.ticks">
-                  <td>
+                  <td @mouseover="mouseover($event)" @mouseout="mouseout($event)">
                    {{ weekday }} 
                   </td>
                   <td>
@@ -114,13 +114,13 @@
                   <td>
                     {{ session.sessiontime }}
                   </td>
-                  <td @drop="drop($event)" @dragover="allowDrop($event)" data-type="1">
+                  <td @drop="drop($event)" @dragover='dragover($event)' data-type="1">
                     {{ tick.cohort }}
                   </td>
-                  <td @drop="drop($event)" @dragover="allowDrop($event)" data-type="2">
+                  <td @drop="drop($event)" @dragover='dragover($event)' data-type="2">
                     {{ tick.teacher }}
                   </td>
-                  <td @drop="drop($event)" @dragover="allowDrop($event)" data-type="3">
+                  <td @drop="drop($event)" @dragover='dragover($event)' data-type="3">
                     {{ tick.room }}
                   </td>
                   <td v-for="i in tableData.totalweeks" :class="{dropped: tick[i]}" :data-day="weekday" :data-si="si" :data-ti="ti" :data-x="i" @mousedown="mousedown($event)">
@@ -142,6 +142,9 @@
       var vm = new Vue({
         el: '#app',
         data: {
+          mDay: null,
+          mSi: null,
+          mTi: null,
           tableData: {
             title: '总班级课表',
             year: '2017-2018',
@@ -466,7 +469,7 @@
             }
           },
 
-          test: function(){
+          addRow: function(){
             var test = {
               sessionnum: 'testest', sessiontime:'19:30-21:05', 
               ticks:[
@@ -475,8 +478,12 @@
               ]
             }
             // vm.$data.tableData.rows['Mon'][0].ticks[0]['1'] = true;
-            this.tableData.rows['Sun'].push(test);
-            console.log(this.tableData.rows['Sun']);
+            var theOne = this.tableData.rows[this.mDay][this.mSi]['ticks'][this.mTi];
+            console.log(this.mDay, this.mSi, this.mTi, theOne);
+            this.tableData.rows[this.mDay][this.mSi]['ticks'].splice(this.mTi, 0, theOne);
+          },
+          removeRow: function(){
+
           },
 
           drag:function(event){
@@ -531,10 +538,23 @@
               } 
             }
           },
-          allowDrop:function(event){
+          dragover:function(event){
             event.preventDefault();
-            // console.log(event.target)
           },
+          mouseover:function(event){
+            var btn = document.getElementById("iButtons");
+            btn.style.top = event.target.offsetTop + 'px';
+            var firstDay = event.target.parentElement.querySelector('[data-day]');
+            this.mDay = firstDay.getAttribute("data-day");
+            this.mSi = firstDay.getAttribute("data-si");
+            this.mTi = firstDay.getAttribute("data-ti");
+            console.log(this.mDay, this.mSi, this.mTi);
+          },
+          mouseout:function(event){
+
+          },
+
+
 
         },
         created: function(){
