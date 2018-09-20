@@ -38,7 +38,7 @@
     <div id="app">
       <div id="cohortSection" class="mySection" style="display: inline-block;" v-if='tableData.cohort'>
         <div v-for='cohort in tableData.cohort'>
-          <div class="draggableMajor mydrag" v-bind:style="{'background-color': cohort.color}">
+          <div class="draggableMajor mydrag" data-type="1" :data-name="cohort.name" draggable="true" @dragstart='drag($event)' v-bind:style="{'background-color': cohort.color}">
           </div> 
           <div style="display: inline-block;">{{ cohort.name }}</div>
         </div>
@@ -46,7 +46,7 @@
 
       <div id="teacherSection" class="mySection" style="display: inline-block;" v-if='tableData.teacher'>
         <div style="margin: 5px" v-for='name in tableData.teacher.name'>
-          <div class="draggableTeacher mydrag" style="text-align: center; width: 50px; border: 1px solid;" :style="{'border-color':tableData.teacher.color}">
+          <div class="draggableTeacher mydrag" data-type="2" draggable="true" @dragstart='drag($event)' style="text-align: center; width: 50px; border: 1px solid;" :style="{'border-color':tableData.teacher.color}">
             {{ name }}
           </div>
         </div>
@@ -54,7 +54,7 @@
 
       <div id="roomSection" class="mySection" style="display: inline-block;" v-if='tableData.room'>
         <div style="margin: 5px" v-for='name in tableData.room.name'>
-          <div class="draggableRoom mydrag" style="text-align: center; width: 50px; border: 1px solid;" :style="{'border-color':tableData.room.color}">
+          <div class="draggableRoom mydrag" data-type="3" draggable="true" @dragstart='drag($event)' style="text-align: center; width: 50px; border: 1px solid;" :style="{'border-color':tableData.room.color}">
             {{ name }}
           </div>
         </div>
@@ -114,16 +114,16 @@
                   <td>
                     {{ session.sessiontime }}
                   </td>
-                  <td>
+                  <td @drop="drop($event)" @dragover="allowDrop($event)" data-type="1">
                     {{ tick.cohort }}
                   </td>
-                  <td>
+                  <td @drop="drop($event)" @dragover="allowDrop($event)" data-type="2">
                     {{ tick.teacher }}
                   </td>
-                  <td>
+                  <td @drop="drop($event)" @dragover="allowDrop($event)" data-type="3">
                     {{ tick.room }}
                   </td>
-                  <td v-for="i in tableData.totalweeks" :data-day="weekday" :data-si="si" :data-ti="ti" :data-x="i" @mousedown="mousedown($event)">
+                  <td v-for="i in tableData.totalweeks" :class="{dropped: tick[i]}" :data-day="weekday" :data-si="si" :data-ti="ti" :data-x="i" @mousedown="mousedown($event)">
                     <template v-if="tick[i]">&radic;</template>
                   </td>
                 </tr>
@@ -138,6 +138,7 @@
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <script src="https://unpkg.com/vue/dist/vue.js"></script>
     <script>
+      let dom = null;
       var vm = new Vue({
         el: '#app',
         data: {
@@ -453,13 +454,15 @@
 
             if(content == "\u221A"){
               e.target.innerHTML = '';
-              // $(this).removeClass('dropped');
-              // $(this).removeAttr("style");
+              event.target.classList.remove("dropped");
+              event.target.style['background-color'] = "transparent"
             } else{
               e.target.innerHTML = '&radic;';
-              // $(this).addClass('dropped');
-              // var color = $(this).siblings('.droppableMajor').css("background-color");
-              // $(this).css("background-color", color);
+              event.target.classList.add("dropped");
+              var coloredOne = e.target.parentElement.querySelector('.dropped');
+              if(coloredOne){
+                event.target.style['background-color'] = coloredOne.style['background-color'];
+              }
             }
           },
 
@@ -476,6 +479,62 @@
             console.log(this.tableData.rows['Sun']);
           },
 
+          drag:function(event){
+            dom = event.currentTarget;
+          },
+          drop:function(event){
+            event.preventDefault();
+            var mType = dom.getAttribute("data-type");
+            var mDropType = event.target.getAttribute("data-type");
+            if(mType !== mDropType){
+              return;
+            }
+            console.log(mType);
+            switch(mType){
+              case '1':
+                event.target.style['background-color'] = dom.style['background-color'];
+                event.target.innerText = dom.getAttribute("data-name");
+                event.target.classList.add("dropped");
+                event.target.parentElement.querySelectorAll('.dropped').forEach(function(elm, idx){
+                  elm.style['background-color'] = dom.style['background-color'];
+                })
+              break;
+              case '2':
+                event.target.innerText = dom.innerText;
+                event.target.classList.add("dropped");
+                var coloredOne = event.target.parentElement.querySelector('.dropped');
+                if(coloredOne){
+                  event.target.style['background-color'] = coloredOne.style['background-color'];
+                }
+              break;
+              case '3':
+                event.target.innerText = dom.innerText;
+                event.target.classList.add("dropped");
+                var coloredOne = event.target.parentElement.querySelector('.dropped');
+                if(coloredOne){
+                  event.target.style['background-color'] = coloredOne.style['background-color'];
+                }
+              break;
+              default:
+              console.log("error switch");
+            }
+            event.target.ondblclick = function(){
+              console.log(this)
+              this.innerText = '';
+              this.removeAttribute('style');
+              this.classList.remove('dropped');
+              this.ondblclick = null;
+              if(mType == 1){
+                this.parentElement.querySelectorAll('.dropped').forEach(function(elm, idx){
+                  elm.style['background-color'] = 'transparent';
+                })
+              } 
+            }
+          },
+          allowDrop:function(event){
+            event.preventDefault();
+            // console.log(event.target)
+          },
 
         },
         created: function(){
