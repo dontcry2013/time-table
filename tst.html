@@ -114,13 +114,13 @@
                   <td>
                     {{ session.sessiontime }}
                   </td>
-                  <td @drop="drop($event)" @dragover='dragover($event)' data-type="1">
+                  <td @drop="drop($event)" @dragover='dragover($event)' @dblclick="dblclick($event)" :class="{dropped: tick.cohort}" :data-day="weekday" :data-si="si" :data-ti="ti" data-type="1">
                     {{ tick.cohort }}
                   </td>
-                  <td @drop="drop($event)" @dragover='dragover($event)' data-type="2">
+                  <td @drop="drop($event)" @dragover='dragover($event)' @dblclick="dblclick($event)" :class="{dropped: tick.teacher}" :data-day="weekday" :data-si="si" :data-ti="ti" data-type="2">
                     {{ tick.teacher }}
                   </td>
-                  <td @drop="drop($event)" @dragover='dragover($event)' data-type="3">
+                  <td @drop="drop($event)" @dragover='dragover($event)' @dblclick="dblclick($event)" :class="{dropped: tick.room}" :data-day="weekday" :data-si="si" :data-ti="ti" data-type="3">
                     {{ tick.room }}
                   </td>
                   <td v-for="i in tableData.totalweeks" :class="{dropped: tick[i]}" :data-day="weekday" :data-si="si" :data-ti="ti" :data-x="i" @mousedown="mousedown($event)">
@@ -450,15 +450,18 @@
           })(),
           mousedown: function(e){
             var content = e.target.innerHTML;
+            var day = e.target.getAttribute("data-day");
             var si = e.target.getAttribute("data-si");
             var ti = e.target.getAttribute("data-ti");
             var x = e.target.getAttribute("data-x");
-            console.log(si, ti, x, content);
+            console.log(day, si, ti, x, content);
 
             if(content == "\u221A"){
               e.target.innerHTML = '';
               event.target.classList.remove("dropped");
-              event.target.style['background-color'] = "transparent"
+              event.target.style['background-color'] = "transparent";
+
+              this.tableData.rows[day][si]['ticks'][ti][x] = false;
             } else{
               e.target.innerHTML = '&radic;';
               event.target.classList.add("dropped");
@@ -466,26 +469,31 @@
               if(coloredOne){
                 event.target.style['background-color'] = coloredOne.style['background-color'];
               }
+              this.tableData.rows[day][si]['ticks'][ti][x] = true;
             }
           },
-
           addRow: function(){
-            var test = {
-              sessionnum: 'testest', sessiontime:'19:30-21:05', 
-              ticks:[
-                {cohort:undefined, teacher:undefined, room:undefined,},
-                {cohort:undefined, teacher:undefined, room:undefined,},
-              ]
-            }
-            // vm.$data.tableData.rows['Mon'][0].ticks[0]['1'] = true;
+
+            var backgroundColor = document.querySelector('[data-day="'+this.mDay+'"][data-si="'+this.mSi+'"][data-ti="'+this.mTi+'"][data-type="1"]').style['background-color'];
+
+
             var theOne = this.tableData.rows[this.mDay][this.mSi]['ticks'][this.mTi];
+            theOne = JSON.parse(JSON.stringify(theOne));
             console.log(this.mDay, this.mSi, this.mTi, theOne);
             this.tableData.rows[this.mDay][this.mSi]['ticks'].splice(this.mTi, 0, theOne);
+            this.$nextTick(() => {
+              var ti = parseInt(this.mTi) + 1;
+              var t = document.querySelector('[data-day="'+this.mDay+'"][data-si="'+this.mSi+'"][data-ti="'+ti+'"][data-type="1"]');
+              var tp = t.parentElement;
+              tp.querySelectorAll(".dropped").forEach(function(elm, idx){
+                elm.style['background-color'] = backgroundColor;
+              });
+              console.log(t, backgroundColor);
+            })
           },
           removeRow: function(){
-
+            this.tableData.rows[this.mDay][this.mSi]['ticks'].splice(this.mTi, 1);
           },
-
           drag:function(event){
             dom = event.currentTarget;
           },
@@ -496,7 +504,10 @@
             if(mType !== mDropType){
               return;
             }
-            console.log(mType);
+            var si = event.target.getAttribute("data-si");
+            var ti = event.target.getAttribute("data-ti");
+            var day = event.target.getAttribute("data-day");
+            console.log(mType, day, si, ti);
             switch(mType){
               case '1':
                 event.target.style['background-color'] = dom.style['background-color'];
@@ -505,6 +516,8 @@
                 event.target.parentElement.querySelectorAll('.dropped').forEach(function(elm, idx){
                   elm.style['background-color'] = dom.style['background-color'];
                 })
+
+                this.tableData.rows[day][si]['ticks'][ti]['cohort'] = event.target.innerText;
               break;
               case '2':
                 event.target.innerText = dom.innerText;
@@ -513,6 +526,7 @@
                 if(coloredOne){
                   event.target.style['background-color'] = coloredOne.style['background-color'];
                 }
+                this.tableData.rows[day][si]['ticks'][ti]['teacher'] = event.target.innerText;
               break;
               case '3':
                 event.target.innerText = dom.innerText;
@@ -521,21 +535,32 @@
                 if(coloredOne){
                   event.target.style['background-color'] = coloredOne.style['background-color'];
                 }
+                this.tableData.rows[day][si]['ticks'][ti]['room'] = event.target.innerText;
               break;
               default:
               console.log("error switch");
             }
-            event.target.ondblclick = function(){
-              console.log(this)
-              this.innerText = '';
-              this.removeAttribute('style');
-              this.classList.remove('dropped');
-              this.ondblclick = null;
-              if(mType == 1){
-                this.parentElement.querySelectorAll('.dropped').forEach(function(elm, idx){
-                  elm.style['background-color'] = 'transparent';
-                })
-              } 
+          },
+          dblclick: function(dblEvent){
+            if(dblEvent.target.innerText == ''){
+              return;
+            }
+            dblEvent.target.innerText = '';
+            dblEvent.target.removeAttribute('style');
+            dblEvent.target.classList.remove('dropped');
+            var si = dblEvent.target.getAttribute("data-si");
+            var ti = dblEvent.target.getAttribute("data-ti");
+            var day = dblEvent.target.getAttribute("data-day");
+            var mType = dblEvent.target.getAttribute("data-type");
+            if(mType == 1){
+              dblEvent.target.parentElement.querySelectorAll('.dropped').forEach(function(elm, idx){
+                elm.style['background-color'] = 'transparent';
+              });
+              this.tableData.rows[day][si]['ticks'][ti]['cohort'] = '';
+            } else if(mType == 2){
+              this.tableData.rows[day][si]['ticks'][ti]['teacher'] = '';
+            } else if(mType == 3){
+              this.tableData.rows[day][si]['ticks'][ti]['room'] = '';
             }
           },
           dragover:function(event){
