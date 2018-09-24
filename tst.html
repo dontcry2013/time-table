@@ -474,22 +474,56 @@
           },
           addRow: function(){
 
-            var backgroundColor = document.querySelector('[data-day="'+this.mDay+'"][data-si="'+this.mSi+'"][data-ti="'+this.mTi+'"][data-type="1"]').style['background-color'];
+            // var backgroundColor = document.querySelector('[data-day="'+this.mDay+'"][data-si="'+this.mSi+'"][data-ti="'+this.mTi+'"][data-type="1"]').style['background-color'];
+
+            var tr = document.querySelector('[data-day="'+this.mDay+'"][data-si="'+this.mSi+'"][data-ti="'+this.mTi+'"][data-type="1"]').parentElement;
+            var copy = tr.cloneNode(true);
+            copy.addEventListener("drop", function(event){
+              event.preventDefault();
+              var mType = dom.getAttribute("data-type");
+              var mDropType = event.target.getAttribute("data-type");
+              if(mType !== mDropType){
+                return;
+              }
+              var si = event.target.getAttribute("data-si");
+              var ti = event.target.getAttribute("data-ti");
+              var day = event.target.getAttribute("data-day");
+              console.log(mType, day, si, ti);
+           
+              event.target.style['background-color'] = dom.style['background-color'];
+              event.target.innerText = dom.getAttribute("data-name");
+              event.target.classList.add("dropped");
+              event.target.parentElement.querySelectorAll('.dropped').forEach(function(elm, idx){
+                elm.style['background-color'] = dom.style['background-color'];
+              })
+
+                  
+            });
+
+            copy.addEventListener("click", function(event){
+              event.preventDefault();
+              console.log(123)
+            });
+
+            copy.addEventListener("dragover", function(event){
+              event.preventDefault();
+            });
+            tr.parentElement.insertBefore(copy, tr);
 
 
-            var theOne = this.tableData.rows[this.mDay][this.mSi]['ticks'][this.mTi];
-            theOne = JSON.parse(JSON.stringify(theOne));
-            console.log(this.mDay, this.mSi, this.mTi, theOne);
-            this.tableData.rows[this.mDay][this.mSi]['ticks'].splice(this.mTi, 0, theOne);
-            this.$nextTick(() => {
-              var ti = parseInt(this.mTi) + 1;
-              var t = document.querySelector('[data-day="'+this.mDay+'"][data-si="'+this.mSi+'"][data-ti="'+ti+'"][data-type="1"]');
-              var tp = t.parentElement;
-              tp.querySelectorAll(".dropped").forEach(function(elm, idx){
-                elm.style['background-color'] = backgroundColor;
-              });
-              console.log(t, backgroundColor);
-            })
+            // var theOne = this.tableData.rows[this.mDay][this.mSi]['ticks'][this.mTi];
+            // theOne = JSON.parse(JSON.stringify(theOne));
+            // console.log(this.mDay, this.mSi, this.mTi, theOne);
+            // this.tableData.rows[this.mDay][this.mSi]['ticks'].splice(this.mTi, 0, theOne);
+            // this.$nextTick(() => {
+            //   var ti = parseInt(this.mTi) + 1;
+            //   var t = document.querySelector('[data-day="'+this.mDay+'"][data-si="'+this.mSi+'"][data-ti="'+ti+'"][data-type="1"]');
+            //   var tp = t.parentElement;
+            //   tp.querySelectorAll(".dropped").forEach(function(elm, idx){
+            //     elm.style['background-color'] = backgroundColor;
+            //   });
+            //   console.log(t, backgroundColor);
+            // })
           },
           removeRow: function(){
             this.tableData.rows[this.mDay][this.mSi]['ticks'].splice(this.mTi, 1);
