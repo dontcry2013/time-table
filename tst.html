@@ -37,25 +37,25 @@
   <body>
     <div id="app">
       <div id="cohortSection" class="mySection" style="display: inline-block;" v-if='tableData.cohort'>
-        <div v-for='cohort in tableData.cohort'>
-          <div class="draggableMajor mydrag" data-type="1" :data-name="cohort.name" draggable="true" @dragstart='drag($event)' v-bind:style="{'background-color': cohort.color}">
+        <div v-for='(cohort, id) in tableData.cohort'>
+          <div class="draggableMajor mydrag" data-type="1" :data-id="id" :data-name="cohort.name" draggable="true" @dragstart='drag($event)' v-bind:style="{'background-color': cohort.color}">
           </div> 
           <div style="display: inline-block;">{{ cohort.name }}</div>
         </div>
       </div>
 
       <div id="teacherSection" class="mySection" style="display: inline-block;" v-if='tableData.teacher'>
-        <div style="margin: 5px" v-for='name in tableData.teacher.name'>
-          <div class="draggableTeacher mydrag" data-type="2" draggable="true" @dragstart='drag($event)' style="text-align: center; width: 50px; border: 1px solid;" :style="{'border-color':tableData.teacher.color}">
-            {{ name }}
+        <div style="margin: 5px" v-for='(teacher, id) in tableData.teacher'>
+          <div class="draggableTeacher mydrag" data-type="2" :data-id="id" draggable="true" @dragstart='drag($event)' style="text-align: center; width: 50px; border: 1px solid;" :style="{'border-color':teacher.color}">
+            {{ teacher.name }}
           </div>
         </div>
       </div>    
 
       <div id="roomSection" class="mySection" style="display: inline-block;" v-if='tableData.room'>
-        <div style="margin: 5px" v-for='name in tableData.room.name'>
-          <div class="draggableRoom mydrag" data-type="3" draggable="true" @dragstart='drag($event)' style="text-align: center; width: 50px; border: 1px solid;" :style="{'border-color':tableData.room.color}">
-            {{ name }}
+        <div style="margin: 5px" v-for='(room, id) in tableData.room'>
+          <div class="draggableRoom mydrag" data-type="3" :data-id="id" draggable="true" @dragstart='drag($event)' style="text-align: center; width: 50px; border: 1px solid;" :style="{'border-color':room.color}">
+            {{ room.name }}
           </div>
         </div>
       </div>  
@@ -114,16 +114,16 @@
                   <td>
                     {{ session.sessiontime }}
                   </td>
-                  <td @drop="drop($event)" @dragover='dragover($event)' @dblclick="dblclick($event)" :class="{dropped: tick.cohort}" :data-day="weekday" :data-si="si" :data-ti="ti" data-type="1">
-                    {{ tick.cohort }}
+                  <td @drop="drop($event)" @dragover='dragover($event)' @dblclick="dblclick($event)" :class="{dropped: tick.cohort}" :data-day="weekday" :data-si="si" :data-ti="ti" data-type="1" :style="[tick.cohort ? {'background-color': tableData.cohort[tick.cohort].color} : {}]">
+                    {{ computedCohortId(tick.cohort) }}
                   </td>
-                  <td @drop="drop($event)" @dragover='dragover($event)' @dblclick="dblclick($event)" :class="{dropped: tick.teacher}" :data-day="weekday" :data-si="si" :data-ti="ti" data-type="2">
-                    {{ tick.teacher }}
+                  <td @drop="drop($event)" @dragover='dragover($event)' @dblclick="dblclick($event)" :class="{dropped: tick.teacher}" :data-day="weekday" :data-si="si" :data-ti="ti" data-type="2" :style="[(tick.teacher && tick.cohort) ? {'background-color': tableData.cohort[tick.cohort].color} : {}]">
+                    {{ computedTeacherId(tick.teacher) }}
                   </td>
-                  <td @drop="drop($event)" @dragover='dragover($event)' @dblclick="dblclick($event)" :class="{dropped: tick.room}" :data-day="weekday" :data-si="si" :data-ti="ti" data-type="3">
-                    {{ tick.room }}
+                  <td @drop="drop($event)" @dragover='dragover($event)' @dblclick="dblclick($event)" :class="{dropped: tick.room}" :data-day="weekday" :data-si="si" :data-ti="ti" data-type="3" :style="[(tick.room && tick.cohort) ? {'background-color': tableData.cohort[tick.cohort].color} : {}]">
+                    {{ computedRoomId(tick.room) }}
                   </td>
-                  <td v-for="i in tableData.totalweeks" :class="{dropped: tick[i]}" :data-day="weekday" :data-si="si" :data-ti="ti" :data-x="i" @mousedown="mousedown($event)">
+                  <td v-for="i in tableData.totalweeks" :class="[{dropped: tick[i]}, computedStyle(tick[i], tick.cohort)]" :data-day="weekday" :data-si="si" :data-ti="ti" :data-x="i" @mousedown="mousedown($event)" :style="[(tick[i] && tick.cohort) ? {'background-color': tableData.cohort[tick.cohort].color} : {}]">
                     <template v-if="tick[i]">&radic;</template>
                   </td>
                 </tr>
@@ -151,25 +151,30 @@
             semester: '2',
             totalweeks: 20,
             startdate: '03/5/2018',
-            cohort:[
-              {color: "cadetblue", name: 'Construction Management 1701'}, 
-              {color: "darkturquoise", name: 'Construction Management 1702'}, 
-              {color: "beige", name: 'Civil Engineering 1701'}, 
-              {color: "darkorange", name: 'Civil Engineering 1702'},
-            ],
+            cohort:{
+              1: {color: "cadetblue", name: 'Construction Management 1701'}, 
+              2: {color: "darkturquoise", name: 'Construction Management 1702'}, 
+              3: {color: "beige", name: 'Civil Engineering 1701'}, 
+              4: {color: "darkorange", name: 'Civil Engineering 1702'},
+            },
             teacher:{
-              color: "orange", name: ['Alice', 'Jack', 'Pony', 'John']
+              11: {color: "cadetblue", name: 'Alice'}, 
+              22: {color: "darkturquoise", name: 'Jack'}, 
+              33: {color: "rebeccapurple", name: 'Pony'}, 
+              44: {color: "darkorange", name: 'Peter'},
             },
             room:{
-              color: "khaki",
-              name: ['10-108', '10-102', '10-107', '10-103']
+              111: {color: "cadetblue", name: '10-108'}, 
+              222: {color: "darkturquoise", name: '10-102'}, 
+              333: {color: "rebeccapurple", name: '10-107'}, 
+              444: {color: "darkorange", name: '10-103'},
             },
             rows:{
               Mon: [
                 {
                   sessionnum: '1-2', sessiontime:'08:30-10:05',  
                   ticks:[
-                    {cohort:undefined, teacher:undefined, room:undefined, 8: true},
+                    {cohort:1, teacher:11, room:111, 8: true},
                     {cohort:undefined, teacher:undefined, room:undefined,},
                   ]
                 },
@@ -437,7 +442,8 @@
               weekArr.push((mDate.getMonth()+1)+'/'+mDate.getDate());
             }
             return weekArr;
-          }
+          }, 
+
         },
         methods:{
           getNextWeek: (function(){
@@ -448,6 +454,26 @@
               return myday;
             }
           })(),
+          computedCohortId: function(id){
+            if(id){
+              return this.tableData.cohort[id].name;
+            }
+          }, 
+          computedTeacherId: function(id){
+            if(id){
+              return this.tableData.teacher[id].name;
+            }
+          },
+          computedRoomId: function(id){
+            if(id){
+              return this.tableData.room[id].name;
+            }
+          },
+          computedStyle: function(ticked, id){
+            if(ticked && id){
+              return {'background-color': this.tableData.cohort[id].color}
+            }
+          },
           mousedown: function(e){
             var content = e.target.innerHTML;
             var day = e.target.getAttribute("data-day");
@@ -474,9 +500,9 @@
           },
           addRow: function(){
 
-            // var backgroundColor = document.querySelector('[data-day="'+this.mDay+'"][data-si="'+this.mSi+'"][data-ti="'+this.mTi+'"][data-type="1"]').style['background-color'];
+            
 
-            var tr = document.querySelector('[data-day="'+this.mDay+'"][data-si="'+this.mSi+'"][data-ti="'+this.mTi+'"][data-type="1"]').parentElement;
+            /*var tr = document.querySelector('[data-day="'+this.mDay+'"][data-si="'+this.mSi+'"][data-ti="'+this.mTi+'"][data-type="1"]').parentElement;
             var copy = tr.cloneNode(true);
             copy.addEventListener("drop", function(event){
               event.preventDefault();
@@ -508,13 +534,15 @@
             copy.addEventListener("dragover", function(event){
               event.preventDefault();
             });
-            tr.parentElement.insertBefore(copy, tr);
+            tr.parentElement.insertBefore(copy, tr);*/
 
+            
+            var backgroundColor = document.querySelector('[data-day="'+this.mDay+'"][data-si="'+this.mSi+'"][data-ti="'+this.mTi+'"][data-type="1"]').style['background-color'];
 
-            // var theOne = this.tableData.rows[this.mDay][this.mSi]['ticks'][this.mTi];
-            // theOne = JSON.parse(JSON.stringify(theOne));
-            // console.log(this.mDay, this.mSi, this.mTi, theOne);
-            // this.tableData.rows[this.mDay][this.mSi]['ticks'].splice(this.mTi, 0, theOne);
+            var theOne = this.tableData.rows[this.mDay][this.mSi]['ticks'][this.mTi];
+            theOne = JSON.parse(JSON.stringify(theOne));
+            console.log(this.mDay, this.mSi, this.mTi, theOne);
+            this.tableData.rows[this.mDay][this.mSi]['ticks'].splice(this.mTi, 0, theOne);
             // this.$nextTick(() => {
             //   var ti = parseInt(this.mTi) + 1;
             //   var t = document.querySelector('[data-day="'+this.mDay+'"][data-si="'+this.mSi+'"][data-ti="'+ti+'"][data-type="1"]');
@@ -533,6 +561,7 @@
           },
           drop:function(event){
             event.preventDefault();
+            var mId = dom.getAttribute("data-id");
             var mType = dom.getAttribute("data-type");
             var mDropType = event.target.getAttribute("data-type");
             if(mType !== mDropType){
@@ -541,7 +570,7 @@
             var si = event.target.getAttribute("data-si");
             var ti = event.target.getAttribute("data-ti");
             var day = event.target.getAttribute("data-day");
-            console.log(mType, day, si, ti);
+            console.log(mType, mId, day, si, ti);
             switch(mType){
               case '1':
                 event.target.style['background-color'] = dom.style['background-color'];
@@ -551,7 +580,7 @@
                   elm.style['background-color'] = dom.style['background-color'];
                 })
 
-                this.tableData.rows[day][si]['ticks'][ti]['cohort'] = event.target.innerText;
+                this.tableData.rows[day][si]['ticks'][ti]['cohort'] = mId;
               break;
               case '2':
                 event.target.innerText = dom.innerText;
@@ -560,7 +589,7 @@
                 if(coloredOne){
                   event.target.style['background-color'] = coloredOne.style['background-color'];
                 }
-                this.tableData.rows[day][si]['ticks'][ti]['teacher'] = event.target.innerText;
+                this.tableData.rows[day][si]['ticks'][ti]['teacher'] = mId;
               break;
               case '3':
                 event.target.innerText = dom.innerText;
@@ -569,7 +598,7 @@
                 if(coloredOne){
                   event.target.style['background-color'] = coloredOne.style['background-color'];
                 }
-                this.tableData.rows[day][si]['ticks'][ti]['room'] = event.target.innerText;
+                this.tableData.rows[day][si]['ticks'][ti]['room'] = mId;
               break;
               default:
               console.log("error switch");
@@ -607,7 +636,7 @@
             this.mDay = firstDay.getAttribute("data-day");
             this.mSi = firstDay.getAttribute("data-si");
             this.mTi = firstDay.getAttribute("data-ti");
-            console.log(this.mDay, this.mSi, this.mTi);
+            // console.log(this.mDay, this.mSi, this.mTi);
           },
           mouseout:function(event){
 
