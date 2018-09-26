@@ -8,6 +8,17 @@
     * {
       box-sizing: border-box;
     }
+    body{
+      margin: 0px;
+    }
+    #dragSection{
+      top: 0px;
+      left: 0px;
+      position: fixed;
+      width: 100%;
+      background: aliceblue;
+      z-index: 9999;
+    }
     .mydrag {
       width: 20px;
       height: 20px;
@@ -36,32 +47,34 @@
   </head>
   <body>
     <div id="app">
-      <div id="cohortSection" class="mySection" style="display: inline-block;" v-if='tableData.cohort'>
-        <div v-for='(cohort, id) in tableData.cohort'>
-          <div class="draggableMajor mydrag" data-type="1" :data-id="id" :data-name="cohort.name" draggable="true" @dragstart='drag($event)' v-bind:style="{'background-color': cohort.color}">
-          </div> 
-          <div style="display: inline-block;">{{ cohort.name }}</div>
+      <div id="dragSection">
+        <div id="cohortSection" class="mySection" style="display: inline-block;" v-if='tableData.cohort'>
+          <div v-for='(cohort, id) in tableData.cohort'>
+            <div class="draggableMajor mydrag" data-type="1" :data-id="id" :data-name="cohort.name" draggable="true" @dragstart='drag($event)' v-bind:style="{'background-color': cohort.color}">
+            </div> 
+            <div style="display: inline-block;">{{ cohort.name }}</div>
+          </div>
+        </div>
+
+        <div id="teacherSection" class="mySection" style="display: inline-block;" v-if='tableData.teacher'>
+          <div style="margin: 5px" v-for='(teacher, id) in tableData.teacher'>
+            <div class="draggableTeacher mydrag" data-type="2" :data-id="id" draggable="true" @dragstart='drag($event)' style="text-align: center; width: 50px; border: 1px solid;" :style="{'border-color':teacher.color}">
+              {{ teacher.name }}
+            </div>
+          </div>
+        </div>    
+
+        <div id="roomSection" class="mySection" style="display: inline-block;" v-if='tableData.room'>
+          <div style="margin: 5px" v-for='(room, id) in tableData.room'>
+            <div class="draggableRoom mydrag" data-type="3" :data-id="id" draggable="true" @dragstart='drag($event)' style="text-align: center; width: 50px; border: 1px solid;" :style="{'border-color':room.color}">
+              {{ room.name }}
+            </div>
+          </div>
         </div>
       </div>
-
-      <div id="teacherSection" class="mySection" style="display: inline-block;" v-if='tableData.teacher'>
-        <div style="margin: 5px" v-for='(teacher, id) in tableData.teacher'>
-          <div class="draggableTeacher mydrag" data-type="2" :data-id="id" draggable="true" @dragstart='drag($event)' style="text-align: center; width: 50px; border: 1px solid;" :style="{'border-color':teacher.color}">
-            {{ teacher.name }}
-          </div>
-        </div>
-      </div>    
-
-      <div id="roomSection" class="mySection" style="display: inline-block;" v-if='tableData.room'>
-        <div style="margin: 5px" v-for='(room, id) in tableData.room'>
-          <div class="draggableRoom mydrag" data-type="3" :data-id="id" draggable="true" @dragstart='drag($event)' style="text-align: center; width: 50px; border: 1px solid;" :style="{'border-color':room.color}">
-            {{ room.name }}
-          </div>
-        </div>
-      </div>  
       
 
-      <div id="tableSection" style="position: relative;">
+      <div id="tableSection" style="position: relative; top: 110px">
         <div id="iButtons" style="position: absolute; width: 20px;">
           <input style="width: 100%" type="button" value="+" @click="addRow">
           <input style="width: 100%" type="button" value="-" @click="removeRow">
@@ -124,7 +137,7 @@
                     {{ computedRoomId(tick.room) }}
                   </td>
                   <td v-for="i in tableData.totalweeks" :class="[{dropped: tick[i]}, computedStyle(tick[i], tick.cohort)]" :data-day="weekday" :data-si="si" :data-ti="ti" :data-x="i" @mousedown="mousedown($event)" :style="[(tick[i] && tick.cohort) ? {'background-color': tableData.cohort[tick.cohort].color} : {}]">
-                    <template v-if="tick[i]">&radic;</template>
+                    <template v-if="tick[i]==true">&radic;</template>
                   </td>
                 </tr>
               </template>
@@ -134,8 +147,6 @@
       </div>
     </div>
     
-    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <script src="https://unpkg.com/vue/dist/vue.js"></script>
     <script>
       let dom = null;
