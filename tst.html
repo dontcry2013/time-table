@@ -16,6 +16,7 @@
       left: 0px;
       position: fixed;
       width: 100%;
+      margin-left: 10px;
       background: aliceblue;
       z-index: 9999;
     }
@@ -24,6 +25,15 @@
       height: 20px;
       display: inline-block;
     }
+    .mySection {
+      display: inline-block;
+    }
+    .draggableTeacher, .draggableRoom{
+      text-align: center; 
+      width: 100%; 
+      border: 1px solid;
+    } 
+    
     .red {
       background-color: red;
     }
@@ -48,7 +58,7 @@
   <body>
     <div id="app">
       <div id="dragSection">
-        <div id="cohortSection" class="mySection" style="display: inline-block;" v-if='tableData.cohort'>
+        <div id="cohortSection" class="mySection" v-if='tableData.cohort'>
           <div v-for='(cohort, id) in tableData.cohort'>
             <div class="draggableMajor mydrag" data-type="1" :data-id="id" :data-name="cohort.name" draggable="true" @dragstart='drag($event)' v-bind:style="{'background-color': cohort.color}">
             </div> 
@@ -56,17 +66,17 @@
           </div>
         </div>
 
-        <div id="teacherSection" class="mySection" style="display: inline-block;" v-if='tableData.teacher'>
+        <div id="teacherSection" class="mySection" v-if='tableData.teacher'>
           <div style="margin: 5px" v-for='(teacher, id) in tableData.teacher'>
-            <div class="draggableTeacher mydrag" data-type="2" :data-id="id" draggable="true" @dragstart='drag($event)' style="text-align: center; width: 50px; border: 1px solid;" :style="{'border-color':teacher.color}">
+            <div class="draggableTeacher mydrag" data-type="2" :data-id="id" draggable="true" @dragstart='drag($event)' :style="{'border-color':teacher.color}">
               {{ teacher.name }}
             </div>
           </div>
         </div>    
 
-        <div id="roomSection" class="mySection" style="display: inline-block;" v-if='tableData.room'>
+        <div id="roomSection" class="mySection" v-if='tableData.room'>
           <div style="margin: 5px" v-for='(room, id) in tableData.room'>
-            <div class="draggableRoom mydrag" data-type="3" :data-id="id" draggable="true" @dragstart='drag($event)' style="text-align: center; width: 50px; border: 1px solid;" :style="{'border-color':room.color}">
+            <div class="draggableRoom mydrag" data-type="3" :data-id="id" draggable="true" @dragstart='drag($event)' :style="{'border-color':room.color}">
               {{ room.name }}
             </div>
           </div>
