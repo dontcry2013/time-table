@@ -148,6 +148,7 @@
                   </td>
                   <td v-for="i in tableData.totalweeks" :class="[{dropped: tick[i]}, computedStyle(tick[i], tick.cohort)]" :data-day="weekday" :data-si="si" :data-ti="ti" :data-x="i" @mousedown="mousedown($event)" :style="[(tick[i] && tick.cohort) ? {'background-color': tableData.cohort[tick.cohort].color} : {}]">
                     <template v-if="tick[i]==true">&radic;</template>
+
                   </td>
                 </tr>
               </template>
@@ -504,18 +505,20 @@
             console.log(day, si, ti, x, content);
 
             if(content == "\u221A"){
-              e.target.innerHTML = '';
+              // e.target.innerHTML = '';
               event.target.classList.remove("dropped");
               event.target.style['background-color'] = "transparent";
-              this.tableData.rows[day][si]['ticks'][ti][x] = false;
+              // this.tableData.rows[day][si]['ticks'][ti][x] = false;
+              Vue.set(this.tableData.rows[day][si]['ticks'][ti], x, false);
             } else{
-              e.target.innerHTML = '&radic;';
+              // e.target.innerHTML = '&radic;';
               event.target.classList.add("dropped");
               var coloredOne = e.target.parentElement.querySelector('.dropped');
               if(coloredOne){
                 event.target.style['background-color'] = coloredOne.style['background-color'];
               }
-              this.tableData.rows[day][si]['ticks'][ti][x] = true;
+              // this.tableData.rows[day][si]['ticks'][ti][x] = true;
+              Vue.set(this.tableData.rows[day][si]['ticks'][ti], x, true);
             }
           },
           addRow: function(){
