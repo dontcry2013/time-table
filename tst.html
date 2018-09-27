@@ -40,10 +40,14 @@
     .yellow {
       background-color: lightyellow;
     }
+    #header-fixed { 
+      position: fixed; 
+      top: 100px; 
+      display:none;
+      background-color:white;
+    }
 
-    table {
-      margin: 20px;
-      font-family: arial, sans-serif;
+    table {      font-family: arial, sans-serif;
       border-collapse: collapse;
       /*width: 100%;*/
     }
@@ -84,26 +88,24 @@
       </div>
       
 
-      <div id="tableSection" style="position: relative; top: 110px">
+      <div id="tableSection" style="position: relative; top: 110px; height: 500px; padding: 0 20px;">
         <div id="iButtons" style="position: absolute; width: 20px;">
           <input style="width: 100%" type="button" value="+" @click="addRow">
           <input style="width: 100%" type="button" value="-" @click="removeRow">
         </div>
         
         <table id="iTable">
-          <tbody id="iTBody">
+          <thead>
             <tr>
               <td colspan="120" style="text-align: center;">
                 总班级课表
               </td>
             </tr>
-            
             <tr>
               <td colspan="120" style="text-align: center;">
                 2017-2018学年第2学期
               </td>
             </tr>
-            
             <tr id="iTWeekNum">
               <td colspan="6">
                 周次
@@ -112,7 +114,6 @@
                 {{ i }}
               </td>
             </tr>
-            
             <tr id="iTHead">
               <th>星期</th>
               <th>节次</th>
@@ -124,7 +125,8 @@
                 {{ i }}
               </th>
             </tr>
-            
+          </thead>
+          <tbody id="iTBody">
             <template v-if="tableData.rows" v-for="(sessions, weekday) in tableData.rows">
               <template v-for="(session, si) in sessions">
                 <tr v-for="(tick, ti) in session.ticks">
@@ -154,11 +156,14 @@
               </template>
             </template>
           </tbody>  
-        </table>  
+        </table>
+        <table id="header-fixed"></table>
       </div>
     </div>
     
     <script src="https://unpkg.com/vue/dist/vue.js"></script>
+    <script src="./jQuery-TableHeadFixer/assets/jquery-2.1.3.js"></script>
+    <script src="./jQuery-TableHeadFixer/tableHeadFixer.js"></script>
     <script>
       let dom = null;
       var vm = new Vue({
@@ -466,6 +471,44 @@
             return weekArr;
           }, 
 
+        },
+        mounted() {
+          /*window.addEventListener('scroll', (event) => {
+            var scrollY = Math.round(window.scrollY);
+            console.log(scrollY, window.pageYOffset);
+          });
+          var tableOffset = $("#iTable").offset().top;
+          var $header = $("#iTable > thead").clone();
+          var $fixedHeader = $("#header-fixed").append($header);
+
+          $(window).bind("scroll", function() {
+              var offset = $(this).scrollTop();
+              if (offset >= tableOffset && $fixedHeader.is(":hidden")) {
+                  $fixedHeader.show();
+              }
+              else if (offset < tableOffset) {
+                  $fixedHeader.hide();
+              }
+          });*/
+
+          $("#iTable").tableHeadFixer({
+
+            // fix table header
+            head: true,
+
+            // fix table footer
+            foot: false,
+
+            // fix x left columns
+            left: 0,
+
+            // fix x right columns
+            right: 0,
+
+            // z-index
+            'z-index': 0
+
+          }); 
         },
         methods:{
           getNextWeek: (function(){
