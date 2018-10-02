@@ -226,9 +226,11 @@
       <div id="dragSection">
         <div id="cohortSection" class="mySection" v-if='tableData.cohort'>
           <div v-for='(cohort, id) in tableData.cohort'>
-            <div class="draggableMajor mydrag" @dblclick="dblclickOndrag($event)" data-type="1" :data-id="id" :data-name="cohort.name" draggable="true" @dragstart='drag($event)' v-bind:style="{'background-color': cohort.color}">
-            </div> 
-            <div class="cohort-name">{{ cohort.name }}</div>
+            <template v-if="cohort.color && cohort.name">
+              <div class="draggableMajor mydrag" @dblclick="dblclickOndrag($event)" data-type="1" :data-id="id" :data-name="cohort.name" draggable="true" @dragstart='drag($event)' v-bind:style="{'background-color': cohort.color}">
+              </div> 
+              <div class="cohort-name">{{ cohort.name }}</div>
+            </template>
           </div>
         </div>
 
@@ -249,6 +251,7 @@
         </div>
 
         <button id="show-modal" @click="showModal = true">Add One</button>
+        <button id="submit" @click="submit">Submit</button>
       </div>
       
 
@@ -691,17 +694,17 @@
             this.picked = "1";
           },
           computedCohortId: function(id){
-            if(id){
+            if(id && this.tableData.cohort[id]){
               return this.tableData.cohort[id].name;
             }
           }, 
           computedTeacherId: function(id){
-            if(id){
+            if(id && this.tableData.teacher[id]){
               return this.tableData.teacher[id].name;
             }
           },
           computedRoomId: function(id){
-            if(id){
+            if(id && this.tableData.room[id]){
               return this.tableData.room[id].name;
             }
           },
@@ -815,19 +818,15 @@
             }
           },
 
-          dblclickOndrag: function(dblEvent){
-            if(dblEvent.target.innerText == ''){
-              return;
-            }
-            
+          dblclickOndrag: function(dblEvent){            
             var mId = dblEvent.target.getAttribute("data-id");
             var mType = dblEvent.target.getAttribute("data-type");
             if(mType == 1){
-              Vue.delete(this.tableData.cohort[mId]);
+              Vue.delete(this.tableData.cohort, mId);
             } else if(mType == 2){
-              Vue.delete(this.tableData.teacher[mId]);
+              Vue.delete(this.tableData.teacher, mId);
             } else if(mType == 3){
-              Vue.delete(this.tableData.room[mId]);
+              Vue.delete(this.tableData.room, mId);
             }
           },
 
@@ -846,7 +845,9 @@
           mouseout:function(event){
 
           },
-
+          submit:function(){
+            console.log(this.tableData)
+          },
 
 
         },
