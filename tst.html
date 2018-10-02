@@ -638,10 +638,14 @@
         computed:{
           dateArr: function(){
             var weekArr = [];
-            for(let i = 1; i <= this.tableData.totalweeks; i++){
+            var mFirst = new Date(this.tableData.startdate);
+            mFirst.setDate(mFirst.getDate() + (1 + 7 - mFirst.getDay()) % 7);
+            weekArr.push((mFirst.getMonth()+1)+'/'+mFirst.getDate())
+            for(let i = 1; i < this.tableData.totalweeks; i++){
               let mDate = this.getNextWeek(this.tableData.startdate);
               weekArr.push((mDate.getMonth()+1)+'/'+mDate.getDate());
             }
+            console.log(weekArr)
             return weekArr;
           }, 
 
